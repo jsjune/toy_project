@@ -1,11 +1,8 @@
 from math import *
 
-from flask import *
+from flask import Flask, render_template, request, jsonify
 app = Flask(__name__)
 
-import hashlib
-import jwt
-from datetime import datetime, timedelta
 import requests
 from bs4 import BeautifulSoup
 
@@ -36,17 +33,12 @@ for item in items:
     if db.items.find_one({'product_name': product_name}) is None:
         db.items.insert_one(doc)
 
-SECRET_KEY = 'SPARTA'
+
 
 @app.route('/')
 def home():
-    if request.cookies.get('token') is None:
-        return render_template('index.html')
-    else:
-        token = request.cookies.get('token')
-        member = jwt.decode(token, SECRET_KEY, algorithms = 'HS256')
-        print(member['name'])
-        return render_template('index.html', member=member)
+    return render_template('index.html')
+
 
 @app.route("/list", methods=["GET"])
 def item_list():
@@ -62,6 +54,9 @@ def draw():
     db.users.update_one({'product_name':product_name},{'$push':{'draw_member':id}})
     return render_template('index.html')
 
+@app.route('/signup_form')
+def signup_form():
+    return render_template('login_resist_form.html')
 
 @app.route('/dupli_check', methods=["POST"])
 def duplication_check():
@@ -75,47 +70,16 @@ def duplication_check():
 def sign_up():
     id = request.form['id']
     password = request.form['pw']
-    pw_hash = hashlib.sha256(password.encode('utf-8')).hexdigest()
     name = request.form['name']
     doc={
         'ID':id,
-        'password':pw_hash,
+        'password':password,
         'name':name
     }
     db.member.insert_one(doc)
     return render_template('login_resist_form.html')
 
-@app.route("/sign_in", methods=["POST", "GET"])
-def login():
-    if request.method == 'POST':
-        id = request.form['id']
-        pw = request.form['pw']
 
-        # password는 hash 함수로 암호화
-        pw_hash = hashlib.sha256(pw.encode('utf-8')).hexdigest()
-
-        # 매칭되는 id와 pw 값이 있는 지 확인
-        # 매칭 성공 시 로그인 성공
-        result = db.member.find_one({'ID': id, 'password': pw_hash})
-
-        if result is not None:
-            payload = {
-                'ID': result['ID'],
-                'name': result['name'],
-                'exp': datetime.utcnow() + timedelta(hours=24) # 로그인 24시간 유지
-            }
-            # decode 방법이 jwt.decode(token, secret key, algorithms 으로 바뀜)
-            # 로그인이 성공했다면 id와 jwt token 만들어서 발행해줌
-            # SECRET_KEY로 암호화
-            token = jwt.encode(payload, SECRET_KEY, algorithm = 'HS256')
-
-            resp = make_response(redirect(url_for('home')) )
-            resp.set_cookie('token', token)
-            return resp
-        else:
-            return render_template('login_resist_form.html', msg='아이디 또는 비밀번호가 일치하지 않습니다.')
-    else:
-        return render_template('login_resist_form.html')
 
 if __name__ == '__main__':
     app.run('0.0.0.0', port=5000, debug=True)
