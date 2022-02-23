@@ -123,6 +123,13 @@
                             </ul>
                         </li>
                     </ul>
+                    <div id="btns">
+                        {% if member == null %}
+                        <a href="/sign_in">로그인</a>
+                        {% else %}
+                        <span>{{member['name']}}님 환영합니다.</span>
+                        {% endif %}
+                    </div>
                     <form class="d-flex">
                         <button class="btn btn-outline-dark" type="submit">
                             <i class="bi-cart-fill me-1"></i>

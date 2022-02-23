@@ -40,6 +40,7 @@
                         })
                     }
                 })
+
                 $('#sign-up-id').blur(function () {
                     if ($('#sign-up-id').val().length == 0) {
                         $('#eid').text('아이디를 입력하세요.').addClass("false")
@@ -99,6 +100,17 @@
                     return true
                 }
             }
+
+            function signin_check(){
+                if ($('#sign-in-id').val().length == 0) {
+                    alert('아이디를 입력 해주세요.')
+                    return false
+                }
+                if ($('#sign-in-pw').val().length == 0) {
+                    alert('비밀번호를 입력 해주세요.')
+                    return false
+                }
+            }
         </script>
     </head>
     <body>
@@ -109,11 +121,13 @@
                     <button type="button" class="togglebtn" onclick="login()">SIGN IN</button>
                     <button type="button" class="togglebtn" onclick="register()">SIGN UP</button>
                 </div>
-                <form id="login" action="" class="input-group">
-                    <input type="text" class="input-field" placeholder="User name or Email" required>
-                    <input type="password" class="input-field" placeholder="Enter Password" required>
-                    <button class="submit">Login</button>
+
+                <form id="login" action="/sign_in" class="input-group" method="post" onsubmit="return signin_check()">
+                    <input id="sign-in-id" name="id" type="text" class="input-field" placeholder="아이디">
+                    <input id="sign-in-pw" name="pw" type="password" class="input-field" placeholder="비밀번호">
+                    <input type="submit" class="submit" value="Sign In">
                 </form>
+
                 <form id="register" action="/sign_up" class="input-group" method="post" onsubmit="return signup_check()">
                     <div>
                         <input name="name" id="sign-up-name" type="text" class="input-field" placeholder="이름">
@@ -142,7 +156,6 @@
         var x = document.getElementById("login");
         var y = document.getElementById("register");
         var z = document.getElementById("btn");
-
 
         function login(){
             x.style.left = "50px";
