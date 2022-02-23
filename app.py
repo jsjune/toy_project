@@ -54,6 +54,32 @@ def draw():
     db.users.update_one({'product_name':product_name},{'$push':{'draw_member':id}})
     return render_template('index.html')
 
+@app.route('/signup_form')
+def signup_form():
+    return render_template('login_resist_form.html')
+
+@app.route('/dupli_check', methods=["POST"])
+def duplication_check():
+    id = request.form['id']
+    if db.member.find_one({'ID':id}) is None:
+        return jsonify({'msg' : "사용 가능한 아이디입니다.", 'result' : 1})
+    else:
+        return jsonify({'msg' : "중복된 아이디가 존재합니다.", 'result' : 0})
+
+@app.route('/sign_up', methods=["POST"])
+def sign_up():
+    id = request.form['id']
+    password = request.form['pw']
+    name = request.form['name']
+    doc={
+        'ID':id,
+        'password':password,
+        'name':name
+    }
+    db.member.insert_one(doc)
+    return render_template('login_resist_form.html')
+
+
 
 if __name__ == '__main__':
     app.run('0.0.0.0', port=5000, debug=True)
