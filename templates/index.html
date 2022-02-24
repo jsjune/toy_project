@@ -21,28 +21,73 @@
                 justify-content: center;
                 align-items: center;
             }
+
+            #btns{
+                margin: auto 20px auto 0px;
+            }
+
+            .color-dark{
+                color: black;
+            }
+
+            #draw_list{
+                width: 350px;
+                height: 500px;
+                overflow: auto;
+                padding: 0px;
+            }
+
+            .draw_items{
+                width: 350px;
+                height: 100px;
+                border: 1px solid lightgray;
+                border-radius: 3px;
+                font-weight: bolder;
+                padding-left: 7px;
+                padding-top: 35px;
+            }
+
+            .draw-info{
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
+
         </style>
         <!-- Bootstrap core JS-->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
         <!-- Core theme JS-->
         <script src="{{ url_for('static', filename='js/index_scripts.js') }}"></script>
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script>
+            {% if member != null %}
+                var member = JSON.parse('{{ member|tojson }}');
+            {% endif %}
+
             $(document).ready(function (){
                 listing(1);
             });
 
             function draw(product_name){
-                $.ajax({
-                    type: "POST",
-                    url: "/draw",
-                    data: {
-                        product_name:product_name
-                    },
-                    success: function(response){
-
-                    }
-                })
+                if(member==undefined){
+                    alert('로그인이 필요한 서비스입니다.')
+                }else {
+                    let id = member['ID']
+                    console.log(id)
+                    $.ajax({
+                        type: "POST",
+                        url: "/draw",
+                        data: {
+                            product_name: product_name,
+                            id: id
+                        },
+                        success: function (response) {
+                            alert(response['msg'])
+                            location.reload()
+                        }
+                    })
+                }
             }
 
             function listing(page){
@@ -59,6 +104,10 @@
                             let product_name = rows[i]['product_name']
                             let draw_month = rows[i]['draw_month']
                             let draw_date = rows[i]['draw_date']
+                            let draw_count = 0
+                            if (rows[i]['draw_member'] != undefined){
+                                draw_count = rows[i]['draw_member'].length
+                            }
 
                             let temp_html = `<div class="col mb-5">
                                                 <div class="card h-100">
@@ -70,23 +119,26 @@
                                                     <div class="card-body p-4">
                                                         <div class="text-center">
                                                             <!-- Product name-->
-                                                            <span>${brand}</span>
-                                                            <h5 class="fw-bolder">${product_name}</h5>
-                                                            <div>
-                                                                <div>
-                                                                    <span class="draw-cnt">응모횟수</span>
-                                                                </div>
-                                                                <div>
+                                                            <div class="product">
+                                                                <span>${brand}</span>
+                                                                <h5 class="fw-bolder">${product_name}</h5>
+                                                            </div>
+                                                            <div class="draw-info">
+                                                                <div class="draw-date">
                                                                     <strong>응모일</strong>
                                                                     <span class="month"><h5><strong>${draw_month}</strong></h5></span>
                                                                     <span class="date"><strong>${draw_date}</strong></span>
+                                                                </div>
+                                                                <div class="draw-cnt">
+                                                                    <span>응모횟수</span>
+                                                                    <span>${draw_count}</span>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <!-- Product actions-->
                                                     <div class="card-footer p-4 pt-0 border-top-0 bg-transparent">
-                                                        <div class="text-center"><a class="btn btn-outline-dark mt-auto" onclick="draw(${product_name})">응모하기</a></div>
+                                                        <div class="text-center"><a class="btn btn-outline-dark mt-auto" onclick="draw('${product_name}')">응모하기</a></div>
                                                     </div>
                                                 </div>
                                             </div>`
@@ -107,36 +159,40 @@
         <!-- Navigation-->
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
             <div class="container px-4 px-lg-5">
-                <a class="navbar-brand" href="#!">Bonne Chance!</a>
+                <a class="navbar-brand" href="/">Bonne Chance!</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
                         <li class="nav-item"><a class="nav-link active" aria-current="page" href="/">Home</a></li>
                         <li class="nav-item"><a class="nav-link" href="#!">About</a></li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Shop</a>
-                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                <li><a class="dropdown-item" href="#!">All Products</a></li>
-                                <li><hr class="dropdown-divider" /></li>
-                                <li><a class="dropdown-item" href="#!">Popular Items</a></li>
-                                <li><a class="dropdown-item" href="#!">New Arrivals</a></li>
-                            </ul>
-                        </li>
                     </ul>
                     <div id="btns">
                         {% if member == null %}
                         <a href="/sign_in">로그인</a>
                         {% else %}
                         <span>{{member['name']}}님 환영합니다.</span>
+                        <a href="#">로그아웃</a>
+                        <div class="btn btn-outline-dark dropdown">
+                            <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi-cart-fill me-1 color-dark"></i>
+                                <span class="color-dark">내 응모 내역</span>
+                                <span class="badge bg-dark text-white ms-1 rounded-pill">
+                                    {% if member['draw_items'] == null %}
+                                    0
+                                    {% else %}
+                                    {{ member['draw_items']|length }}
+                                    {% endif %}
+                                </span>
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="navbarDropdown" id="draw_list">
+                                {% for item in member['draw_items']%}
+                                <div class="draw_items">{{item}}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
                         {% endif %}
                     </div>
-                    <form class="d-flex">
-                        <button class="btn btn-outline-dark" type="submit">
-                            <i class="bi-cart-fill me-1"></i>
-                            Cart
-                            <span class="badge bg-dark text-white ms-1 rounded-pill">0</span>
-                        </button>
-                    </form>
+
                 </div>
             </div>
         </nav>

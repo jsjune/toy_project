@@ -1,15 +1,14 @@
 from math import *
-
 from flask import *
-app = Flask(__name__)
-
 import hashlib
 import jwt
 from datetime import datetime, timedelta
 import requests
 from bs4 import BeautifulSoup
-
 from pymongo import MongoClient
+import item_list
+
+app = Flask(__name__)
 client = MongoClient('mongodb+srv://test:sparta@cluster0.tfnms.mongodb.net/Cluster0?retryWrites=true&w=majority')
 db = client.toy_project
 
@@ -19,22 +18,7 @@ soup = BeautifulSoup(data.text, 'html.parser')
 
 items = soup.select('ul.calendar_list > li')
 
-for item in items:
-    image = item.select_one('div.img_area > img')['data-src'].strip()
-    brand = item.select_one('div.info_area > div.product_info > div.brand').text.strip()
-    product_name = item.select_one('div.info_area > div.product_info > div.name').text.strip()
-    draw_month = item.select_one('div.info_area > div.date_info > span.month').text.strip()
-    draw_date = item.select_one('div.info_area > div.date_info > span.date').text.strip()
-    doc = {
-        'image': image,
-        'brand': brand,
-        'product_name': product_name,
-        'draw_month': draw_month,
-        'draw_date': draw_date
-    }
-
-    if db.items.find_one({'product_name': product_name}) is None:
-        db.items.insert_one(doc)
+item_list.crawling()
 
 SECRET_KEY = 'SPARTA'
 
@@ -45,7 +29,6 @@ def home():
     else:
         token = request.cookies.get('token')
         member = jwt.decode(token, SECRET_KEY, algorithms = 'HS256')
-        print(member['name'])
         return render_template('index.html', member=member)
 
 @app.route("/list", methods=["GET"])
@@ -56,11 +39,24 @@ def item_list():
     last_page = ceil(items_count/12)
     return jsonify({'items': item_list, 'last_page': last_page})
 
-@app.route('/draw', methods=["GET"])
+@app.route('/draw', methods=["POST"])
 def draw():
     product_name = request.form['product_name']
-    db.users.update_one({'product_name':product_name},{'$push':{'draw_member':id}})
-    return render_template('index.html')
+    id = request.form['id']
+    item = db.items.find_one({'product_name': product_name})
+
+    if item.get('draw_member') is None:
+        db.items.update_one({'product_name': product_name}, {'$push': {'draw_member': id}})
+        db.member.update_one({'ID': id}, {'$push': {'draw_items': product_name}})
+        return jsonify({'msg': '응모가 완료되었습니다!'})
+
+    else:
+        if id in item['draw_member']:
+            return jsonify({'msg': '이미 응모 되어있는 상품입니다.'})
+
+        db.items.update_one({'product_name': product_name}, {'$push': {'draw_member': id}})
+        db.member.update_one({'ID': id}, {'$push': {'draw_items': product_name}})
+        return jsonify({'msg': '응모가 완료되었습니다!'})
 
 
 @app.route('/dupli_check', methods=["POST"])
@@ -91,22 +87,18 @@ def login():
         id = request.form['id']
         pw = request.form['pw']
 
-        # password는 hash 함수로 암호화
         pw_hash = hashlib.sha256(pw.encode('utf-8')).hexdigest()
 
-        # 매칭되는 id와 pw 값이 있는 지 확인
-        # 매칭 성공 시 로그인 성공
         result = db.member.find_one({'ID': id, 'password': pw_hash})
 
         if result is not None:
             payload = {
                 'ID': result['ID'],
                 'name': result['name'],
+                'draw_items': result.get('draw_items'),
                 'exp': datetime.utcnow() + timedelta(hours=24) # 로그인 24시간 유지
             }
-            # decode 방법이 jwt.decode(token, secret key, algorithms 으로 바뀜)
-            # 로그인이 성공했다면 id와 jwt token 만들어서 발행해줌
-            # SECRET_KEY로 암호화
+
             token = jwt.encode(payload, SECRET_KEY, algorithm = 'HS256')
 
             resp = make_response(redirect(url_for('home')) )
