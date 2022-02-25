@@ -29,7 +29,12 @@ def home():
     else:
         token = request.cookies.get('token')
         member = jwt.decode(token, SECRET_KEY, algorithms = 'HS256')
-        return render_template('index.html', member=member)
+        id = member['ID']
+        if db.member.find_one({'ID': id}).get('draw_items'):
+            draw_items = list(db.member.find_one({'ID': id}).get('draw_items'))
+            return render_template('index.html', member=member, draw_items=draw_items)
+        else:
+            return render_template('index.html', member=member)
 
 @app.route("/list", methods=["GET"])
 def item_list():
@@ -38,6 +43,13 @@ def item_list():
     items_count = len(list(db.items.find({}, {'_id': False})))
     last_page = ceil(items_count/12)
     return jsonify({'items': item_list, 'last_page': last_page})
+
+@app.route("/delete_draw", methods=["POST"])
+def delete_draw():
+    id = request.form['id']
+    item = request.form['product_name']
+    db.member.update_one({'ID': id}, {'$pull': {'draw_items': item}})
+    return jsonify({'msg': '삭제가 완료되었습니다.'})
 
 @app.route('/draw', methods=["POST"])
 def draw():

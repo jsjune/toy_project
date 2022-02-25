@@ -91,6 +91,22 @@
                 }
             }
 
+            function draw_delete(product_name){
+                let id = member['ID']
+                $.ajax({
+                    type: "POST",
+                    url: "/delete_draw",
+                    data: {
+                        product_name: product_name,
+                        id: id
+                    },
+                    success: function (response) {
+                        alert(response['msg'])
+                        location.reload()
+                    }
+                })
+            }
+
             function listing(page){
                 $.ajax({
                     type: "GET",
@@ -192,7 +208,11 @@
                             </a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdown" id="draw_list">
                                 {% for item in draw_items%}
-                                <div class="draw_items">{{item}}</div>
+                                <div class="draw_items">
+                                    {{item}}
+                                    <br>
+                                    <a class="btn btn-outline-dark mt-auto" onclick="draw_delete('{{item}}')">삭제</a>
+                                </div>
                                 {% endfor %}
                             </div>
                         </div>
