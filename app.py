@@ -95,7 +95,6 @@ def login():
             payload = {
                 'ID': result['ID'],
                 'name': result['name'],
-                'draw_items': result.get('draw_items'),
                 'exp': datetime.utcnow() + timedelta(hours=24) # 로그인 24시간 유지
             }
 

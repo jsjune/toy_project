@@ -60,6 +60,7 @@
         <!-- Core theme JS-->
         <script src="{{ url_for('static', filename='js/index_scripts.js') }}"></script>
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
         <script>
             {% if member != null %}
                 var member = JSON.parse('{{ member|tojson }}');
@@ -153,6 +154,11 @@
                     }
                 })
             }
+
+            function logout(){
+                $.removeCookie('token', {path: '/'})
+                location.href = '/'
+            }
         </script>
     </head>
     <body>
@@ -171,21 +177,21 @@
                         <a href="/sign_in">로그인</a>
                         {% else %}
                         <span>{{member['name']}}님 환영합니다.</span>
-                        <a href="#">로그아웃</a>
+                        <a href="javascript:logout()">로그아웃</a>
                         <div class="btn btn-outline-dark dropdown">
                             <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi-cart-fill me-1 color-dark"></i>
                                 <span class="color-dark">내 응모 내역</span>
                                 <span class="badge bg-dark text-white ms-1 rounded-pill">
-                                    {% if member['draw_items'] == null %}
+                                    {% if draw_items == null %}
                                     0
                                     {% else %}
-                                    {{ member['draw_items']|length }}
+                                    {{ draw_items|length }}
                                     {% endif %}
                                 </span>
                             </a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdown" id="draw_list">
-                                {% for item in member['draw_items']%}
+                                {% for item in draw_items%}
                                 <div class="draw_items">{{item}}</div>
                                 {% endfor %}
                             </div>
