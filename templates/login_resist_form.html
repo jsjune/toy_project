@@ -1,0 +1,173 @@
+<html>
+    <head>
+        <title>로그인 / 회원가입 폼 템플릿</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+        <style>
+            .true{
+                color: yellowgreen;
+                font-size: 6pt;
+            }
+            .false{
+                color: red;
+                font-size: 6pt;
+            }
+        </style>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script>
+            var idError = true,
+                pwError = true,
+                pwCheckError = true,
+                nameError = true;
+
+            $(document).ready(function () {
+                $('#sign-up-id').keyup(function () {
+                    let id = $('#sign-up-id').val()
+                    if (id.length > 3) {
+                        $.ajax({
+                            type: "POST",
+                            url: "/dupli_check",
+                            data: {id: id},
+                            success: function (response) {
+                                let msg = response['msg']
+                                let result = response['result']
+                                console.log(msg, result)
+                                if (result) {
+                                    $('#eid').text(msg).addClass("true").removeClass("false")
+                                }else{
+                                    $('#eid').text(msg).addClass("false")
+                                }
+                            }
+                        })
+                    }
+                })
+
+                $('#sign-up-id').blur(function () {
+                    if ($('#sign-up-id').val().length == 0) {
+                        $('#eid').text('아이디를 입력하세요.').addClass("false")
+                        idError = true
+                    }
+                    if ($('#sign-up-id').val().length < 4) {
+                        $('#eid').text('아이디를 4글자 이상 입력 해주세요.').addClass("false")
+                        idError = true
+                    } else{
+                        idError = false
+                    }
+                })
+
+                $('#sign-up-name').blur(function () {
+                    if ($('#sign-up-name').val().length == 0) {
+                        $('#ename').text('이름을 입력하세요.').addClass("false")
+                        nameError = true
+                    } else if ($('#sign-up-name').val().length < 2) {
+                        $('#ename').text('이름을 2글자 이상 입력 해주세요.').addClass("false")
+                        nameError = true
+                    } else{
+                        $('#ename').text('')
+                        nameError = false
+                    }
+                })
+
+                $('#sign-up-pw').blur(function () {
+                    if ($('#sign-up-pw').val().length == 0) {
+                        $('#epw').text('비밀번호를 입력하세요.').addClass("false")
+                        pwError = true
+                    } else if ($('#sign-up-pw').val().length < 6) {
+                        $('#epw').text('비밀번호는 6글자 이상 입력 해주세요.').addClass("false")
+                        pwError = true
+                    } else{
+                        $('#epw').text('')
+                        pwError = false
+                    }
+                })
+
+                $('#sign-up-pw_check').blur(function () {
+                    if ($('#sign-up-pw_check').val().length == 0) {
+                        $('#epwCheck').text('비밀번호 확인을 입력하세요.').addClass("false")
+                        pwCheckError = true
+                    }else if ($('#sign-up-pw').val() != $('#sign-up-pw_check').val()) {
+                        $('#epwCheck').text('비밀번호 확인이 일치하지 않습니다.').addClass("false")
+                        pwCheckError = true
+                    }else{
+                        $('#epwCheck').text('')
+                        pwCheckError = false
+                    }
+                })
+            })
+            function signup_check() {
+                if(nameError||idError||pwError||pwCheckError){
+                    return false
+                }else{
+                    return true
+                }
+            }
+
+            function signin_check(){
+                if ($('#sign-in-id').val().length == 0) {
+                    alert('아이디를 입력 해주세요.')
+                    return false
+                }
+                if ($('#sign-in-pw').val().length == 0) {
+                    alert('비밀번호를 입력 해주세요.')
+                    return false
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <div class="wrap">
+            <div class="form-wrap">
+                <div class="button-wrap">
+                    <div id="btn"></div>
+                    <button type="button" class="togglebtn" onclick="login()">SIGN IN</button>
+                    <button type="button" class="togglebtn" onclick="register()">SIGN UP</button>
+                </div>
+
+                <form id="login" action="/sign_in" class="input-group" method="post" onsubmit="return signin_check()">
+                    <input id="sign-in-id" name="id" type="text" class="input-field" placeholder="아이디">
+                    <input id="sign-in-pw" name="pw" type="password" class="input-field" placeholder="비밀번호">
+                    <input type="submit" class="submit" value="Sign In">
+                </form>
+
+                <form id="register" action="/sign_up" class="input-group" method="post" onsubmit="return signup_check()">
+                    <div>
+                        <input name="name" id="sign-up-name" type="text" class="input-field" placeholder="이름">
+                        <span id="ename"></span>
+                    </div>
+                    <div>
+                        <input name="id" id="sign-up-id" type="text" class="input-field" placeholder="아이디">
+                        <span id="eid"></span>
+                    </div>
+                    <div>
+                        <input name="pw" id="sign-up-pw" type="password" class="input-field" placeholder="비밀번호">
+                        <span id="epw"></span>
+                    </div>
+                    <div>
+                        <input id="sign-up-pw_check" type="password" class="input-field" placeholder="비밀번호 확인">
+                        <span id='epwCheck'></span>
+                    </div>
+                    <div>
+                        <input type="submit" class="submit" value="Sign Up">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </body>
+    <script>
+        var x = document.getElementById("login");
+        var y = document.getElementById("register");
+        var z = document.getElementById("btn");
+
+        function login(){
+            x.style.left = "50px";
+            y.style.left = "450px";
+            z.style.left = "0";
+        }
+
+        function register(){
+            x.style.left = "-400px";
+            y.style.left = "50px";
+            z.style.left = "110px";
+        }
+
+    </script>
+</html>
