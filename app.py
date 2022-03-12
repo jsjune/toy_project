@@ -9,7 +9,7 @@ from pymongo import MongoClient
 import item_list
 
 app = Flask(__name__)
-client = MongoClient('mongodb+srv://test:sparta@cluster0.tfnms.mongodb.net/Cluster0?retryWrites=true&w=majority')
+client = MongoClient()
 db = client.toy_project
 
 headers = {'User-Agent' : }
